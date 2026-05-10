@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zumo — Asian Kitchen</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a18;
+    --rice: #f5f2eb;
+    --red: #c0392b;
+    --muted: #7a7a72;
+    --border: #e2ddd4;
+    --card: #ffffff;
+    --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--rice); color: var(--ink); min-height: 100vh; padding-bottom: 120px; }
+
+  header { background: var(--ink); color: white; text-align: center; padding: 28px 20px 20px; position: sticky; top: 0; z-index: 100; }
+  header .brand { font-family: 'Playfair Display', serif; font-size: 2rem; letter-spacing: 4px; font-weight: 400; }
+  header .sub { font-size: 0.72rem; letter-spacing: 3px; color: #aaa; margin-top: 2px; text-transform: uppercase; }
+
+  .tabs { display: flex; overflow-x: auto; background: var(--ink); border-top: 1px solid #333; scrollbar-width: none; padding: 0 12px 12px; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn { flex-shrink: 0; padding: 8px 16px; border: 1px solid #444; background: transparent; color: #aaa; border-radius: 20px; font-family: 'DM Sans', sans-serif; font-size: 0.78rem; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; margin-right: 8px; white-space: nowrap; }
+  .tab-btn.active { background: var(--red); border-color: var(--red); color: white; }
+
+  .content { padding: 16px 14px 0; max-width: 700px; margin: 0 auto; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: var(--red); margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); letter-spacing: 1px; }
+
+  .menu-item { background: var(--card); border-radius: 10px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); }
+  .item-info { flex: 1; }
+  .item-code { font-size: 0.65rem; color: var(--muted); letter-spacing: 1px; margin-bottom: 2px; }
+  .item-name { font-weight: 600; font-size: 0.95rem; line-height: 1.3; }
+  .item-desc { font-size: 0.75rem; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+  .item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; min-width: 90px; }
+  .item-price { font-weight: 700; font-size: 0.88rem; color: var(--ink); white-space: nowrap; }
+  .item-price-small { font-size: 0.68rem; color: var(--muted); font-weight: 400; }
+
+  .qty-control { display: flex; align-items: center; border: 1.5px solid var(--border); border-radius: 20px; overflow: hidden; }
+  .qty-btn { background: none; border: none; width: 30px; height: 28px; font-size: 1.1rem; cursor: pointer; color: var(--red); font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .qty-btn:active { background: #f0e8e8; }
+  .qty-num { font-size: 0.85rem; font-weight: 700; min-width: 22px; text-align: center; }
+
+  .add-btn { background: var(--red); color: white; border: none; border-radius: 20px; padding: 6px 14px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+  .add-btn:active { background: #a93226; }
+
+  .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--ink); color: white; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; z-index: 200; box-shadow: 0 -4px 20px rgba(0,0,0,0.25); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+  .bottom-bar.visible { transform: translateY(0); }
+  .bar-info .bar-count { font-size: 0.75rem; color: #aaa; }
+  .bar-info .bar-total { font-family: 'Playfair Display', serif; font-size: 1.3rem; }
+  .bar-btn { background: var(--red); color: white; border: none; border-radius: 25px; padding: 12px 24px; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.9rem; cursor: pointer; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 300; justify-content: flex-end; align-items: flex-end; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: 20px 20px 0 0; width: 100%; max-width: 700px; margin: 0 auto; padding: 24px 20px 32px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1); position: relative; }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .modal-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: 18px; color: var(--ink); }
+  .close-modal { position: absolute; top: 16px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--muted); }
+
+  .cart-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 10px; }
+  .cart-item-name { flex: 1; font-weight: 500; font-size: 0.9rem; }
+  .cart-item-price { font-weight: 700; font-size: 0.9rem; min-width: 75px; text-align: right; }
+  .cart-total-row { display: flex; justify-content: space-between; padding: 14px 0 4px; font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 6px; }
+  .form-group input, .form-group textarea { width: 100%; border: 1.5px solid var(--border); border-radius: 10px; padding: 12px 14px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: var(--rice); }
+  .form-group input:focus, .form-group textarea:focus { border-color: var(--red); }
+  .form-group textarea { resize: vertical; min-height: 72px; }
+
+  .btn-full { width: 100%; padding: 15px; background: #25D366; color: white; border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1rem; cursor: pointer; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-full:active { background: #1ebe5d; }
+  .btn-ghost { width: 100%; padding: 13px; background: transparent; color: var(--ink); border: 1.5px solid var(--border); border-radius: 12px; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.95rem; cursor: pointer; margin-top: 10px; }
+  .btn-red { background: var(--red) !important; }
+  .btn-red:active { background: #a93226 !important; }
+
+  .empty { text-align: center; padding: 28px 0; color: var(--muted); font-size: 0.9rem; }
+  .cat-section { display: none; }
+  .cat-section.active { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">zümo</div>
+  <div class="sub">Asian Kitchen · 菜单</div>
+</header>
+
+<div class="tabs" id="tabs"></div>
+<div class="content" id="menuContent"></div>
+
+<div class="bottom-bar" id="bottomBar">
+  <div class="bar-info">
+    <div class="bar-count" id="barCount">0 items</div>
+    <div class="bar-total" id="barTotal">Rs 0</div>
+  </div>
+  <button class="bar-btn" onclick="openCart()">View Cart →</button>
+</div>
+
+<!-- CART MODAL -->
+<div class="modal-overlay" id="cartModal">
+  <div class="modal">
+    <button class="close-modal" onclick="closeModal('cartModal')">×</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Your Cart 🛒</div>
+    <div id="cartItems"></div>
+    <div id="cartEmpty" class="empty" style="display:none">Your cart is empty.</div>
+    <div class="cart-total-row" id="cartTotalRow" style="display:none">
+      <span>Total</span><span id="cartTotalAmt"></span>
+    </div>
+    <button class="btn-full btn-red" onclick="openDetails()" id="checkoutBtn" style="display:none">Proceed to Checkout →</button>
+    <button class="btn-ghost" onclick="closeModal('cartModal')">Continue Browsing</button>
+  </div>
+</div>
+
+<!-- CUSTOMER DETAILS MODAL -->
+<div class="modal-overlay" id="detailsModal">
+  <div class="modal">
+    <button class="close-modal" onclick="closeModal('detailsModal')">×</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Your Details 📋</div>
+    <div class="form-group">
+      <label>FULL NAME</label>
+      <input type="text" id="custName" placeholder="e.g. Ali Ahmed">
+    </div>
+    <div class="form-group">
+      <label>MOBILE NUMBER</label>
+      <input type="tel" id="custPhone" placeholder="e.g. 03001234567">
+    </div>
+    <div class="form-group">
+      <label>DELIVERY ADDRESS</label>
+      <textarea id="custAddress" placeholder="House no. / street / area..."></textarea>
+    </div>
+    <button class="btn-full" onclick="placeOrder()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Place Order on WhatsApp
+    </button>
+    <button class="btn-ghost" onclick="closeModal('detailsModal')">Back to Cart</button>
+  </div>
+</div>
+
+<script>
+const WA_NUMBER = '923040288843';
+
+const MENU = {
+  STARTER: {
+    label: "Starter", emoji: "🥢",
+    items: [
+      { code:"A01", name:"Neue Tempura Prawn", desc:"Deep-fried batter coated prawns with sauce", price:790, price2:1570, unit:"3/6 pcs" },
+      { code:"A02", name:"Special Fengmi Prawn", desc:"Deep-fried marinated prawns with spicy honey glaze sauce", price:790, price2:1590, unit:"3/6 pcs" },
+      { code:"A03", name:"Adabo Wings", desc:"Aromatic fried crispy wings with soya, ginger, chilies & onion", price:490, price2:990, unit:"3/6 pcs" },
+      { code:"A04", name:"Tamarind Glazed Fish", desc:"Deep-fried fillet of fish with tamarind flavors", price:770, price2:1530, unit:"3/6 pcs" },
+      { code:"A05", name:"Zumos Momos", desc:"Marinated chicken, batter mushrooms & seasonal veggies", price:590, price2:1170, unit:"4/8 pcs" },
+      { code:"A06", name:"Hot Dynamite Prawn 🌶🌶", desc:"Crispy prawns tossed in a spicy dynamite sauce", price:1290 },
+      { code:"A07", name:"Hot Dynamite Chicken 🌶🌶", desc:"Crispy chicken tossed in a spicy dynamite sauce", price:990 },
+      { code:"A08", name:"Spring Rolls", desc:"Filled with cabbage and chicken, served with soy dipping sauces", price:390, price2:890, unit:"3/6 pcs" },
+      { code:"A09", name:"Chicken Drumstick", desc:"Spicy minced chicken drumsticks with Chinese spices", price:200, unit:"1 pc" },
+      { code:"A10", name:"Fish Cracker", desc:"Crunchy fish crackers", price:300 },
+    ]
+  },
+  SOUP: {
+    label: "Soup", emoji: "🍲",
+    items: [
+      { code:"S11", name:"Classic Sweet Corn Soup", desc:"Minced chicken with sweet corn and beaten egg", price:490, price2:1190 },
+      { code:"S12", name:"Spicy Hot & Sour 🌶🌶", desc:"Fresh vegetables, spices, soya sauce and vinegar", price:490, price2:1190 },
+      { code:"S13", name:"Zumo Special Shrimp Soup", desc:"Chicken, prawn, mushroom, egg and seasonal vegetables", price:660, price2:1570 },
+      { code:"S14", name:"Chicken Noodle Soup", desc:"Clear chicken broth with tender chicken and soft noodles", price:490, price2:1190 },
+    ]
+  },
+  NOODLE: {
+    label: "Noodle Bar", emoji: "🍜",
+    items: [
+      { code:"N15", name:"Chicken ChaoMein", desc:"Julienned chicken with assorted vegetables & egg noodles", price:600, price2:1090 },
+      { code:"N16", name:"Vegetable ChaoMein", desc:"Egg noodles stir fried with seasonal vegetables & soy sauce", price:500, price2:990 },
+      { code:"N17", name:"Zumo Special ChaoMien", desc:"Julienned prawn & chicken with seasonal vegetables", price:1180, price2:1790 },
+      { code:"N18", name:"Stir Fried Chicken Chili Noodles 🌶🌶", desc:"Chicken, mushroom and vegetables with egg noodles", price:690, price2:1290 },
+      { code:"N19", name:"Stir Fried Beef Chili Noodles 🌶🌶", desc:"Beef, mushroom and vegetables with egg noodles", price:790, price2:1390 },
+      { code:"N20", name:"Bakmi Goreng 🌶", desc:"Singaporean-style stir-fried noodles with eggs, bean sprouts and veggies", price:1150 },
+    ]
+  },
+  BEEF: {
+    label: "Beef", emoji: "🥩",
+    items: [
+      { code:"B38", name:"Beef Chili Ganzao", desc:"Stir-fried with oyster sauce, mushrooms, and baby corn", price:1340, price2:1530 },
+      { code:"B39", name:"Beef in Oyster Sauce", desc:"Stir-fried beef with oyster sauce, mushrooms, and baby corn", price:1340, price2:1530 },
+      { code:"B40", name:"Famous Mongolian Beef", desc:"Tender beef in sweet Mongolian sauce with green onions", price:1360, price2:1560 },
+      { code:"B41", name:"Dragon Beef 🌶🌶", desc:"Wok-fried beef with seasonal veggies in spicy ginger sauce", price:1350, price2:1540 },
+      { code:"B44", name:"Beef Szechuan 🌶🌶", desc:"Wok-fried beef with veggies in sweet, sour & savory chili sauce", price:1340, price2:1530 },
+      { code:"B45", name:"Wok Card Beef 🌶", desc:"Stir-fried beef in bold Indonesian black pepper sauce", price:1350, price2:1540 },
+      { code:"B50", name:"Indonesian Blackpepper Beef", desc:"Stir-fried beef in Indonesian black pepper sauce with peppers", price:1350, price2:1540 },
+    ]
+  },
+  SEAFOOD: {
+    label: "Seafood", emoji: "🦐",
+    items: [
+      { code:"M32", name:"Fish Chili Dry 🌶🌶", desc:"Stir fried fish in red and green chili and onion", price:1490, price2:1680 },
+      { code:"M33", name:"Prawn Szechuan", desc:"Stir fried prawn with red chili, capsicum, onion & pickled chili paste", price:1450, price2:1650 },
+      { code:"M34", name:"Crispy Zumo Prawns", desc:"Batter coated prawn with veggies in Zumo's special sauce", price:1499, price2:1690 },
+      { code:"M36", name:"Dragon Prawn/Fish 🌶🌶", desc:"Wok-fried prawn/fish with seasonal veggies in spicy ginger sauce", price:1460, price2:1660 },
+      { code:"M37", name:"Szechuan Fish 🌶", desc:"Stir fried fish with red chili, capsicum, onion & pickled chili paste", price:1450, price2:1650 },
+    ]
+  },
+  RICE: {
+    label: "Rice", emoji: "🍚",
+    items: [
+      { code:"R51", name:"Garlic Rice", desc:"Rice cooked in roasted garlic", price:390, price2:700 },
+      { code:"R52", name:"Egg Fried Rice", desc:"Wok fried rice with fried eggs", price:390, price2:700 },
+      { code:"R53", name:"Plain Rice", desc:"Steamed plain white rice", price:260, price2:500 },
+      { code:"R54", name:"Vegetable Rice", desc:"Wok fried rice with seasonal veggies & soy", price:390, price2:700 },
+      { code:"R55", name:"Masala Rice 🌶🌶", desc:"Stir-fried rice tossed with spices & vegetables", price:500, price2:900 },
+    ]
+  },
+  DRINKS: {
+    label: "Drinks", emoji: "🥤",
+    items: [
+      { code:"D56", name:"Soft Drink (Can)", desc:"Assorted soft drinks", price:180 },
+      { code:"D57", name:"Assorted Diet Drink (Can)", desc:"Diet soft drinks", price:180 },
+      { code:"D58", name:"Mineral Water", desc:"Small / Large", price:80, price2:180 },
+      { code:"D59", name:"Fresh Lime", desc:"Freshly squeezed lime juice", price:290 },
+    ]
+  }
+};
+
+let cart = {};
+
+function cartKey(item) { return item.code; }
+function rs(n) { return 'Rs ' + n.toLocaleString(); }
+
+function addItem(catKey, idx) {
+  const item = MENU[catKey].items[idx];
+  const k = cartKey(item);
+  if (cart[k]) cart[k].qty++;
+  else cart[k] = { item, qty: 1, catKey };
+  updateUI();
+  const btn = document.getElementById('add-' + catKey + '-' + idx);
+  if (btn) { btn.textContent = '✓'; setTimeout(() => { btn.textContent = 'Add'; }, 700); }
+}
+
+function changeQty(catKey, idx, delta) {
+  const item = MENU[catKey].items[idx];
+  const k = cartKey(item);
+  if (!cart[k]) return;
+  cart[k].qty += delta;
+  if (cart[k].qty <= 0) delete cart[k];
+  updateUI();
+}
+
+function cartTotal() { return Object.values(cart).reduce((s, e) => s + e.item.price * e.qty, 0); }
+function cartCount() { return Object.values(cart).reduce((s, e) => s + e.qty, 0); }
+
+function updateUI() {
+  const count = cartCount();
+  document.getElementById('barCount').textContent = count + ' item' + (count !== 1 ? 's' : '');
+  document.getElementById('barTotal').textContent = rs(cartTotal());
+  document.getElementById('bottomBar').classList.toggle('visible', count > 0);
+
+  Object.keys(MENU).forEach(catKey => {
+    MENU[catKey].items.forEach((item, idx) => {
+      const qty = cart[cartKey(item)] ? cart[cartKey(item)].qty : 0;
+      const addBtn = document.getElementById('add-' + catKey + '-' + idx);
+      const qtyCtrl = document.getElementById('qty-' + catKey + '-' + idx);
+      const qtyNum = document.getElementById('qtynum-' + catKey + '-' + idx);
+      if (!addBtn) return;
+      addBtn.style.display = qty > 0 ? 'none' : '';
+      qtyCtrl.style.display = qty > 0 ? 'flex' : 'none';
+      if (qtyNum) qtyNum.textContent = qty;
+    });
+  });
+}
+
+function render() {
+  const tabsEl = document.getElementById('tabs');
+  const contentEl = document.getElementById('menuContent');
+  tabsEl.innerHTML = '';
+  contentEl.innerHTML = '';
+
+  Object.keys(MENU).forEach((catKey, ci) => {
+    const cat = MENU[catKey];
+
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (ci === 0 ? ' active' : '');
+    btn.textContent = cat.emoji + ' ' + cat.label;
+    btn.onclick = () => switchTab(catKey);
+    btn.id = 'tab-' + catKey;
+    tabsEl.appendChild(btn);
+
+    const sec = document.createElement('div');
+    sec.className = 'cat-section' + (ci === 0 ? ' active' : '');
+    sec.id = 'sec-' + catKey;
+
+    const title = document.createElement('div');
+    title.className = 'section-title';
+    title.textContent = cat.emoji + ' ' + cat.label.toUpperCase();
+    sec.appendChild(title);
+
+    cat.items.forEach((item, idx) => {
+      const el = document.createElement('div');
+      el.className = 'menu-item';
+      const priceLabel = item.price2
+        ? rs(item.price) + ' <span class="item-price-small">/ ' + rs(item.price2) + '</span>'
+        : rs(item.price);
+      const unitLabel = item.unit ? ' <span class="item-price-small">(' + item.unit + ')</span>' : '';
+      el.innerHTML =
+        '<div class="item-info">' +
+          '<div class="item-code">' + item.code + '</div>' +
+          '<div class="item-name">' + item.name + unitLabel + '</div>' +
+          '<div class="item-desc">' + item.desc + '</div>' +
+        '</div>' +
+        '<div class="item-right">' +
+          '<div class="item-price">' + priceLabel + '</div>' +
+          '<button class="add-btn" id="add-' + catKey + '-' + idx + '" onclick="addItem(\'' + catKey + '\',' + idx + ')">Add</button>' +
+          '<div class="qty-control" id="qty-' + catKey + '-' + idx + '" style="display:none">' +
+            '<button class="qty-btn" onclick="changeQty(\'' + catKey + '\',' + idx + ',-1)">−</button>' +
+            '<span class="qty-num" id="qtynum-' + catKey + '-' + idx + '">1</span>' +
+            '<button class="qty-btn" onclick="changeQty(\'' + catKey + '\',' + idx + ',1)">+</button>' +
+          '</div>' +
+        '</div>';
+      sec.appendChild(el);
+    });
+    contentEl.appendChild(sec);
+  });
+}
+
+function switchTab(catKey) {
+  document.querySelectorAll('.cat-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + catKey).classList.add('active');
+  document.getElementById('tab-' + catKey).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function openCart() {
+  const cartItemsEl = document.getElementById('cartItems');
+  const emptyEl = document.getElementById('cartEmpty');
+  const totalRow = document.getElementById('cartTotalRow');
+  const checkBtn = document.getElementById('checkoutBtn');
+  const keys = Object.keys(cart);
+  cartItemsEl.innerHTML = '';
+
+  if (keys.length === 0) {
+    emptyEl.style.display = '';
+    totalRow.style.display = 'none';
+    checkBtn.style.display = 'none';
+  } else {
+    emptyEl.style.display = 'none';
+    totalRow.style.display = '';
+    checkBtn.style.display = '';
+    keys.forEach(k => {
+      const { item, qty, catKey } = cart[k];
+      const idx = MENU[catKey].items.findIndex(i => i.code === item.code);
+      const row = document.createElement('div');
+      row.className = 'cart-item';
+      row.innerHTML =
+        '<div class="cart-item-name">' + item.name + '</div>' +
+        '<div class="qty-control" style="display:flex">' +
+          '<button class="qty-btn" onclick="changeQty(\'' + catKey + '\',' + idx + ',-1);openCart()">−</button>' +
+          '<span class="qty-num">' + qty + '</span>' +
+          '<button class="qty-btn" onclick="changeQty(\'' + catKey + '\',' + idx + ',1);openCart()">+</button>' +
+        '</div>' +
+        '<div class="cart-item-price">' + rs(item.price * qty) + '</div>';
+      cartItemsEl.appendChild(row);
+    });
+    document.getElementById('cartTotalAmt').textContent = rs(cartTotal());
+  }
+  document.getElementById('cartModal').classList.add('open');
+}
+
+function openDetails() {
+  closeModal('cartModal');
+  document.getElementById('detailsModal').classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function placeOrder() {
+  const name = document.getElementById('custName').value.trim();
+  const phone = document.getElementById('custPhone').value.trim();
+  const address = document.getElementById('custAddress').value.trim();
+  if (!name || !phone || !address) {
+    alert('Please fill in all your details.');
+    return;
+  }
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-PK', { day:'2-digit', month:'short', year:'numeric' });
+  const timeStr = now.toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit' });
+
+  const itemLines = Object.values(cart)
+    .map(({ item, qty }) => '• ' + item.name + ' × ' + qty + '  —  ' + rs(item.price * qty))
+    .join('\n');
+
+  const msg =
+    '🍜 *New Order — Zümo Asian Kitchen*\n' +
+    '📅 ' + dateStr + '  🕐 ' + timeStr + '\n\n' +
+    '👤 *Customer Details*\n' +
+    'Name: ' + name + '\n' +
+    'Phone: ' + phone + '\n' +
+    'Address: ' + address + '\n\n' +
+    '🛒 *Order Items*\n' +
+    itemLines + '\n\n' +
+    '💰 *Total: ' + rs(cartTotal()) + '*\n\n' +
+    '_Please confirm this order. Thank you! 🙏_';
+
+  window.open('https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg), '_blank');
+
+  // Reset everything
+  cart = {};
+  updateUI();
+  closeModal('detailsModal');
+  document.getElementById('custName').value = '';
+  document.getElementById('custPhone').value = '';
+  document.getElementById('custAddress').value = '';
+  render();
+}
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+});
+
+render();
+</script>
+</body>
+</html>
